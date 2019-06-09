@@ -6,8 +6,29 @@
 
     <groupId>com.blockware.spring-boot</groupId>
     <artifactId>nosql-mongodb</artifactId>
-    <version>1.0.0</version>
+    <version>0.0.1</version>
 
+    <licenses>
+        <license>
+            <name>MIT License</name>
+            <url>https://opensource.org/licenses/MIT</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <distributionManagement>
+        <repository>
+            <id>blockware</id>
+            <name>blockware</name>
+            <url>https://api.bintray.com/maven/blockware/maven/sdk-java-spring-nosql-mongodb/;publish=1</url>
+        </repository>
+    </distributionManagement>
+
+    <scm>
+        <url>https://github.com/blockwarecom/sdk-java-spring-nosql-mongodb#readme</url>
+        <connection>git+https://github.com/blockwarecom/sdk-java-spring-nosql-mongodb.git</connection>
+    </scm>
+    
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
