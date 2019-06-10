@@ -6,7 +6,7 @@
 
     <groupId>com.blockware.spring-boot</groupId>
     <artifactId>nosql-mongodb</artifactId>
-    <version>0.0.1</version>
+    <version>0.0.2</version>
 
     <licenses>
         <license>
@@ -32,7 +32,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>2.0.1.RELEASE</version>
+        <version>2.0.6.RELEASE</version>
     </parent>
 
     <properties>
@@ -52,14 +52,20 @@
         <dependency>
             <groupId>org.springframework.data</groupId>
             <artifactId>spring-data-commons</artifactId>
-            <version>2.0.6.RELEASE</version>
-            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
             <version>2.9.5</version>
-            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.blockware.spring-boot</groupId>
+            <artifactId>spring-boot</artifactId>
+            <version>[0.0.4,0.1.0)</version>
         </dependency>
     </dependencies>
 

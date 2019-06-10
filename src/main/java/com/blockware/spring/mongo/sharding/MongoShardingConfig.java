@@ -21,18 +21,6 @@ public class MongoShardingConfig {
     @Autowired
     private MongoTemplate mongoTemplate;
 
-    @Value("${mongo.auth_db:admin}")
-    private String dbAuthDB;
-
-    private MongoDatabase adminDb;
-
-    @Bean("adminDb")
-    public MongoDatabase adminDb() {
-        if (adminDb == null) {
-            adminDb = mongoTemplate.getMongoDbFactory().getDb(dbAuthDB);
-        }
-        return adminDb;
-    }
 
     @Bean
     public MongoPersistentEntityShardKeyCreator mongoPersistentEntityShardKeyCreator() {
