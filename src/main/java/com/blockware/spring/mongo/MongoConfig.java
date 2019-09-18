@@ -99,6 +99,9 @@ public class MongoConfig {
 
         ServerAddress serverAddress = new ServerAddress(mongoInfo.getHost(), Integer.valueOf(mongoInfo.getPort()));
 
+
+        log.info("Connecting to mongodb server: {}:{}", mongoInfo.getHost(), mongoInfo.getPort());
+
         MongoClient client;
         MongoClientOptions options = MongoClientOptions.builder()
                 .writeConcern(WriteConcern.JOURNALED)
