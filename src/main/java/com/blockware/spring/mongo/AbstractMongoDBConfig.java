@@ -30,7 +30,7 @@ import java.util.Optional;
 @Slf4j
 abstract public class AbstractMongoDBConfig {
 
-    private static final String RESOURCE_TYPE = "nosqldb.blockware.com/v1/mongodb";
+    private static final String RESOURCE_TYPE = "blockware/resource-type-mongodb";
 
     private static final String PORT_TYPE = "mongodb";
 
