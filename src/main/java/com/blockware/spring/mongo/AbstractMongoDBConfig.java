@@ -2,10 +2,11 @@ package com.blockware.spring.mongo;
 
 
 import com.blockware.spring.cluster.BlockwareClusterService;
-import com.blockware.spring.mongo.sharding.MongoPersistentEntityShardKeyCreator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mongodb.*;
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoDatabase;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.Document;
@@ -15,13 +16,14 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.convert.ReadingConverter;
 import org.springframework.data.convert.WritingConverter;
-import org.springframework.data.mongodb.MongoDbFactory;
+import org.springframework.data.mongodb.MongoDatabaseFactory;
 import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.SimpleMongoDbFactory;
+import org.springframework.data.mongodb.core.SimpleMongoClientDatabaseFactory;
 import org.springframework.data.mongodb.core.convert.*;
 import org.springframework.data.mongodb.core.mapping.MongoMappingContext;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Optional;
 
 /**
@@ -58,47 +60,38 @@ abstract public class AbstractMongoDBConfig {
         final BlockwareClusterService.ResourceInfo mongoInfo = blockwareConfigSource.getResourceInfo(RESOURCE_TYPE, PORT_TYPE, resourceName);
         Optional<String> dbUsername = Optional.ofNullable(mongoInfo.getCredentials().get("username"));
         Optional<String> dbPassword = Optional.ofNullable(mongoInfo.getCredentials().get("password"));
-        Optional<Boolean> dbAuthCR = Optional.ofNullable((Boolean)mongoInfo.getOptions().get("auth_cr"));
+
         dbAuthDB = String.valueOf(mongoInfo.getOptions().getOrDefault("authdb", "admin"));
         databaseName = String.valueOf(mongoInfo.getOptions().getOrDefault("dbName", resourceName));
 
-        ServerAddress serverAddress = new ServerAddress(mongoInfo.getHost(), Integer.valueOf(mongoInfo.getPort()));
+        ServerAddress serverAddress = new ServerAddress(mongoInfo.getHost(), Integer.parseInt(mongoInfo.getPort()));
 
         log.info("Connecting to mongodb server: {}:{} for db: {}", mongoInfo.getHost(), mongoInfo.getPort(), databaseName);
 
-        MongoClient client;
-        MongoClientOptions options = MongoClientOptions.builder()
+        MongoClientSettings.Builder options = MongoClientSettings.builder()
                 .writeConcern(WriteConcern.JOURNALED)
                 .applicationName(applicationName)
-                .build();
+                .applyToClusterSettings(cluster -> {
+                    cluster.hosts(Collections.singletonList(serverAddress));
+                });
 
-
-        if (dbUsername.isPresent() && !dbUsername.get().trim().isEmpty()) {
-
-            MongoCredential dbCredentials = null;
-            if (dbAuthCR.isPresent() && dbAuthCR.get()) {
-                dbCredentials = MongoCredential.createMongoCRCredential(
+        if (dbUsername.isPresent() &&
+                !dbUsername.get().trim().isEmpty()) {
+            options.credential(
+                MongoCredential.createCredential(
                         dbUsername.get(),
                         dbAuthDB,
-                        dbPassword.orElse("").toCharArray());
-            } else {
-                dbCredentials = MongoCredential.createCredential(
-                        dbUsername.get(),
-                        dbAuthDB,
-                        dbPassword.orElse("").toCharArray());
-            }
-
-            client = new MongoClient(serverAddress, dbCredentials, options);
-        } else {
-            client = new MongoClient(serverAddress, options);
+                        dbPassword.orElse("").toCharArray()
+                )
+            );
         }
 
-        return client;
+        return MongoClients.create(options.build());
     }
 
     @Bean
-    public MongoDbFactory mongoDbFactory(MongoClient mongoClient) {
-        final SimpleMongoDbFactory simpleMongoDbFactory = new SimpleMongoDbFactory(mongoClient, databaseName);
+    public MongoDatabaseFactory mongoDbFactory(MongoClient mongoClient) {
+        final SimpleMongoClientDatabaseFactory simpleMongoDbFactory = new SimpleMongoClientDatabaseFactory(mongoClient, databaseName);
 
         log.info("Using mongodb database: {}", databaseName);
 
@@ -106,7 +99,7 @@ abstract public class AbstractMongoDBConfig {
     }
 
     @Bean
-    public MongoConverter mongoConverter(MongoDbFactory factory) {
+    public MongoConverter mongoConverter(MongoDatabaseFactory factory) {
 
         DbRefResolver dbRefResolver = new DefaultDbRefResolver(factory);
 
@@ -128,13 +121,13 @@ abstract public class AbstractMongoDBConfig {
     }
 
     @Bean
-    public MongoTemplate mongoTemplate(MongoDbFactory factory, MongoConverter mongoConverter) {
+    public MongoTemplate mongoTemplate(MongoDatabaseFactory factory, MongoConverter mongoConverter) {
         return new MongoTemplate(factory, mongoConverter);
     }
 
     @Bean("adminDb")
     public MongoDatabase adminDb(MongoTemplate template) {
-        final MongoDatabase adminDb = template.getMongoDbFactory().getDb(dbAuthDB);
+        final MongoDatabase adminDb = template.getMongoDatabaseFactory().getMongoDatabase(dbAuthDB);
 
         enableSharding(adminDb, template);
 
@@ -146,10 +139,6 @@ abstract public class AbstractMongoDBConfig {
         return new MongoAuditor();
     }
 
-    @Bean
-    public MongoPersistentEntityShardKeyCreator mongoPersistentEntityShardKeyCreator() {
-        return new MongoPersistentEntityShardKeyCreator();
-    }
 
     private void enableSharding(MongoDatabase adminDb, MongoTemplate mongoTemplate) {
 

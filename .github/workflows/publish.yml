@@ -1,4 +1,4 @@
-name: Publish to Blockware Public NPM
+name: Publish to Blockware Public Maven Repo
 on:
   push:
     branches:
