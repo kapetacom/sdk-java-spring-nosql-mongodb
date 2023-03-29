@@ -1,4 +1,4 @@
-package com.blockware.spring.mongo.repository;
+package com.kapeta.spring.mongo.repository;
 
 import org.springframework.data.mongodb.core.MongoOperations;
 import org.springframework.data.mongodb.repository.query.MongoEntityInformation;

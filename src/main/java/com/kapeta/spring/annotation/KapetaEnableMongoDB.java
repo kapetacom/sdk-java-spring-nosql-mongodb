@@ -1,9 +1,6 @@
-package com.blockware.spring.annotation;
+package com.kapeta.spring.annotation;
 
-import com.blockware.spring.mongo.repository.BaseMongoRepositoryImpl;
-import org.springframework.context.annotation.Import;
 import org.springframework.data.mongodb.config.EnableMongoAuditing;
-import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
 
 import java.lang.annotation.*;
 
@@ -20,6 +17,6 @@ import java.lang.annotation.*;
         modifyOnCreate = true,
         setDates = true
 )
-public @interface BlockwareEnableMongoDB {
+public @interface KapetaEnableMongoDB {
 
 }

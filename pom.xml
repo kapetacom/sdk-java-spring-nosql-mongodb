@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>blockware</groupId>
+    <groupId>com.kapeta</groupId>
     <artifactId>nosql-mongodb</artifactId>
     <version>0.0.6</version>
 
@@ -19,14 +19,14 @@
     <distributionManagement>
         <repository>
             <id>artifact-registry</id>
-            <url>artifactregistry://europe-maven.pkg.dev/blockware-cloud/blockware-maven-public</url>
+            <url>artifactregistry://europe-north1-maven.pkg.dev/kapeta-production/kapeta-maven-public</url>
         </repository>
     </distributionManagement>
 
     <repositories>
         <repository>
             <id>artifact-registry</id>
-            <url>artifactregistry://europe-maven.pkg.dev/blockware-cloud/blockware-maven-public</url>
+            <url>artifactregistry://europe-north1-maven.pkg.dev/kapeta-production/kapeta-maven-public</url>
             <releases>
                 <enabled>true</enabled>
             </releases>
@@ -111,7 +111,7 @@
             <version>2.13.4.2</version>
         </dependency>
         <dependency>
-            <groupId>blockware</groupId>
+            <groupId>com.kapeta</groupId>
             <artifactId>spring-boot</artifactId>
             <version>(,2.0)</version>
             <scope>provided</scope>

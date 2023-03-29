@@ -1,4 +1,4 @@
-package com.blockware.spring.mongo;
+package com.kapeta.spring.mongo;
 
 
 import com.blockware.spring.cluster.BlockwareClusterService;

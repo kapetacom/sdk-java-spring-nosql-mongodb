@@ -1,4 +1,4 @@
-package com.blockware.spring.mongo.repository;
+package com.kapeta.spring.mongo.repository;
 
 
 import com.mongodb.client.result.UpdateResult;
