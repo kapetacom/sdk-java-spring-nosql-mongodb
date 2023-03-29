@@ -73,8 +73,8 @@
     </build>
 
     <scm>
-        <url>https://github.com/blockwarecom/sdk-java-spring-nosql-mongodb#readme</url>
-        <connection>git+https://github.com/blockwarecom/sdk-java-spring-nosql-mongodb.git</connection>
+        <url>https://github.com/kapetacom/sdk-java-spring-nosql-mongodb#readme</url>
+        <connection>git+https://github.com/kapetacom/sdk-java-spring-nosql-mongodb.git</connection>
     </scm>
     
     <parent>

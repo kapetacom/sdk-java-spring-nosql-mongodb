@@ -1,4 +1,4 @@
-name: Publish to Blockware Public Maven Repo
+name: Publish to Kapeta Public Maven Repo
 on:
   push:
     branches:

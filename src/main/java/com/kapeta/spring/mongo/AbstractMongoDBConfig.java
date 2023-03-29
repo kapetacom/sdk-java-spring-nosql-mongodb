@@ -32,12 +32,12 @@ import java.util.Optional;
 @Slf4j
 abstract public class AbstractMongoDBConfig {
 
-    private static final String RESOURCE_TYPE = "blockware/resource-type-mongodb";
+    private static final String RESOURCE_TYPE = "kapeta/resource-type-mongodb";
 
     private static final String PORT_TYPE = "mongodb";
 
     @Autowired
-    private KapetaClusterService blockwareConfigSource;
+    private KapetaClusterService kapetaConfigSource;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -57,7 +57,7 @@ abstract public class AbstractMongoDBConfig {
 
     @Bean
     public MongoClient createClient() {
-        final KapetaClusterService.ResourceInfo mongoInfo = blockwareConfigSource.getResourceInfo(RESOURCE_TYPE, PORT_TYPE, resourceName);
+        final KapetaClusterService.ResourceInfo mongoInfo = kapetaConfigSource.getResourceInfo(RESOURCE_TYPE, PORT_TYPE, resourceName);
         Optional<String> dbUsername = Optional.ofNullable(mongoInfo.getCredentials().get("username"));
         Optional<String> dbPassword = Optional.ofNullable(mongoInfo.getCredentials().get("password"));
 

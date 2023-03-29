@@ -1,1 +1,1 @@
-# MongoDB support for Blockware Spring Boot SDK
+# MongoDB support for Kapeta Spring Boot SDK
