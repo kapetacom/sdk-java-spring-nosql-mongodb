@@ -1,9 +1,9 @@
 package com.kapeta.spring.mongo;
 
 
-import com.blockware.spring.cluster.BlockwareClusterService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.kapeta.spring.cluster.KapetaClusterService;
 import com.mongodb.*;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
@@ -37,7 +37,7 @@ abstract public class AbstractMongoDBConfig {
     private static final String PORT_TYPE = "mongodb";
 
     @Autowired
-    private BlockwareClusterService blockwareConfigSource;
+    private KapetaClusterService blockwareConfigSource;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -57,7 +57,7 @@ abstract public class AbstractMongoDBConfig {
 
     @Bean
     public MongoClient createClient() {
-        final BlockwareClusterService.ResourceInfo mongoInfo = blockwareConfigSource.getResourceInfo(RESOURCE_TYPE, PORT_TYPE, resourceName);
+        final KapetaClusterService.ResourceInfo mongoInfo = blockwareConfigSource.getResourceInfo(RESOURCE_TYPE, PORT_TYPE, resourceName);
         Optional<String> dbUsername = Optional.ofNullable(mongoInfo.getCredentials().get("username"));
         Optional<String> dbPassword = Optional.ofNullable(mongoInfo.getCredentials().get("password"));
 
