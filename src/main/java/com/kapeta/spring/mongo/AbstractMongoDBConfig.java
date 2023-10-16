@@ -3,27 +3,28 @@ package com.kapeta.spring.mongo;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.kapeta.spring.cluster.KapetaClusterService;
-import com.mongodb.*;
-import com.mongodb.client.MongoClient;
-import com.mongodb.client.MongoClients;
-import com.mongodb.client.MongoDatabase;
+import com.kapeta.spring.config.providers.KapetaConfigurationProvider;
+import com.mongodb.ConnectionString;
+import com.mongodb.MongoClientSettings;
+import com.mongodb.MongoCredential;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.Document;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.mongo.MongoClientSettingsBuilderCustomizer;
+import org.springframework.boot.autoconfigure.mongo.MongoConnectionDetails;
+import org.springframework.boot.autoconfigure.mongo.MongoProperties;
+import org.springframework.boot.autoconfigure.mongo.PropertiesMongoConnectionDetails;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.convert.ReadingConverter;
 import org.springframework.data.convert.WritingConverter;
 import org.springframework.data.mongodb.MongoDatabaseFactory;
-import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.SimpleMongoClientDatabaseFactory;
-import org.springframework.data.mongodb.core.convert.*;
-import org.springframework.data.mongodb.core.mapping.MongoMappingContext;
+import org.springframework.data.mongodb.MongoTransactionManager;
+import org.springframework.data.mongodb.core.convert.MongoCustomConversions;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Optional;
 
 /**
@@ -37,7 +38,7 @@ abstract public class AbstractMongoDBConfig {
     private static final String PORT_TYPE = "mongodb";
 
     @Autowired
-    private KapetaClusterService kapetaConfigSource;
+    private KapetaConfigurationProvider configurationProvider;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -47,119 +48,54 @@ abstract public class AbstractMongoDBConfig {
 
     private final String resourceName;
 
-    private String databaseName;
-
-    private String dbAuthDB;
-
     protected AbstractMongoDBConfig(String resourceName) {
         this.resourceName = resourceName;
     }
 
+    @Bean("mongoInfo")
+    public KapetaConfigurationProvider.ResourceInfo mongoInfo() {
+        return configurationProvider.getResourceInfo(RESOURCE_TYPE, PORT_TYPE, resourceName);
+    }
     @Bean
-    public MongoClient createClient() {
-        final KapetaClusterService.ResourceInfo mongoInfo = kapetaConfigSource.getResourceInfo(RESOURCE_TYPE, PORT_TYPE, resourceName);
-        Optional<String> dbUsername = Optional.ofNullable(mongoInfo.getCredentials().get("username"));
-        Optional<String> dbPassword = Optional.ofNullable(mongoInfo.getCredentials().get("password"));
-
-        dbAuthDB = String.valueOf(mongoInfo.getOptions().getOrDefault("authdb", "admin"));
-        databaseName = String.valueOf(mongoInfo.getOptions().getOrDefault("dbName", resourceName));
-
-        ServerAddress serverAddress = new ServerAddress(mongoInfo.getHost(), Integer.parseInt(mongoInfo.getPort()));
-
-        log.info("Connecting to mongodb server: {}:{} for db: {}", mongoInfo.getHost(), mongoInfo.getPort(), databaseName);
-
-        MongoClientSettings.Builder options = MongoClientSettings.builder()
-                .writeConcern(WriteConcern.JOURNALED)
-                .applicationName(applicationName)
-                .applyToClusterSettings(cluster -> {
-                    cluster.hosts(Collections.singletonList(serverAddress));
-                });
-
-        if (dbUsername.isPresent() &&
-                !dbUsername.get().trim().isEmpty()) {
-            options.credential(
-                MongoCredential.createCredential(
-                        dbUsername.get(),
-                        dbAuthDB,
-                        dbPassword.orElse("").toCharArray()
-                )
-            );
-        }
-
-        return MongoClients.create(options.build());
+    public PropertiesMongoConnectionDetails mongoConnectionDetails(KapetaConfigurationProvider.ResourceInfo mongoInfo) {
+        String databaseName = String.valueOf(mongoInfo.getOptions().getOrDefault("dbName", resourceName));
+        String dbAuthDB = String.valueOf(mongoInfo.getOptions().getOrDefault("authdb", "admin"));
+        MongoProperties properties = new MongoProperties();
+        properties.setDatabase(databaseName);
+        properties.setHost(mongoInfo.getHost());
+        properties.setPort(Integer.valueOf(mongoInfo.getPort()));
+        properties.setUsername(mongoInfo.getCredentials().get("username"));
+        properties.setPassword(mongoInfo.getCredentials().getOrDefault("password","").toCharArray());
+        properties.setAuthenticationDatabase(dbAuthDB);
+        properties.setAutoIndexCreation(true);
+        return new PropertiesMongoConnectionDetails(properties);
     }
 
     @Bean
-    public MongoDatabaseFactory mongoDbFactory(MongoClient mongoClient) {
-        final SimpleMongoClientDatabaseFactory simpleMongoDbFactory = new SimpleMongoClientDatabaseFactory(mongoClient, databaseName);
-
-        log.info("Using mongodb database: {}", databaseName);
-
-        return simpleMongoDbFactory;
+    public MongoClientSettingsBuilderCustomizer customizer() {
+        return settings -> settings.applicationName(applicationName);
     }
 
     @Bean
-    public MongoConverter mongoConverter(MongoDatabaseFactory factory) {
+    public MongoTransactionManager transactionManager(MongoDatabaseFactory dbFactory) {
+        return new MongoTransactionManager(dbFactory);
+    }
 
-        DbRefResolver dbRefResolver = new DefaultDbRefResolver(factory);
+    @Bean
+    public MongoCustomConversions objectNodeConverters() {
 
-        MongoCustomConversions conversions = new MongoCustomConversions(Arrays.asList(
+        return new MongoCustomConversions(Arrays.asList(
                 new MongoToJackson(),
                 new JacksonToMongo()
         ));
-
-        MongoMappingContext mappingContext = new MongoMappingContext();
-        mappingContext.setSimpleTypeHolder(conversions.getSimpleTypeHolder());
-        mappingContext.afterPropertiesSet();
-
-        MappingMongoConverter converter = new MappingMongoConverter(dbRefResolver, mappingContext);
-
-        converter.setCustomConversions(conversions);
-        converter.afterPropertiesSet();
-
-        return converter;
     }
 
-    @Bean
-    public MongoTemplate mongoTemplate(MongoDatabaseFactory factory, MongoConverter mongoConverter) {
-        return new MongoTemplate(factory, mongoConverter);
-    }
-
-    @Bean("adminDb")
-    public MongoDatabase adminDb(MongoTemplate template) {
-        final MongoDatabase adminDb = template.getMongoDatabaseFactory().getMongoDatabase(dbAuthDB);
-
-        enableSharding(adminDb, template);
-
-        return adminDb;
-    }
 
     @Bean("mongoAuditor")
     public MongoAuditor mongoAuditor() {
         return new MongoAuditor();
     }
 
-
-    private void enableSharding(MongoDatabase adminDb, MongoTemplate mongoTemplate) {
-
-        try {
-
-            BasicDBObject enableShardingCmd = new BasicDBObject("enableSharding", mongoTemplate.getDb().getName());
-            adminDb.runCommand(enableShardingCmd);
-        } catch (MongoCommandException ex) {
-            if (ex.getErrorCode() == -1) {
-                log.info("Sharding already enabled for db: {}", mongoTemplate.getDb().getName());
-                return;
-            }
-
-            if (ex.getErrorCode() == 59) {
-                log.warn("Command not found - not connected to cluster (mongos)? [Error: {}] Continuing...", ex.getErrorMessage());
-                return;
-            }
-
-            throw ex;
-        }
-    }
 
     @ReadingConverter
     private class MongoToJackson implements Converter<Document, ObjectNode> {
