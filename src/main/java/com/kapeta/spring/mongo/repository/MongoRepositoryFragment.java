@@ -1,3 +1,8 @@
+/*
+ * Copyright 2023 Kapeta Inc.
+ * SPDX-License-Identifier: MIT
+ */
+
 package com.kapeta.spring.mongo.repository;
 
 import org.springframework.data.mongodb.core.MongoOperations;
