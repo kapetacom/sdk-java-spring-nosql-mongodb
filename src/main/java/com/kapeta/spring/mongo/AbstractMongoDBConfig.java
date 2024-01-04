@@ -9,16 +9,11 @@ package com.kapeta.spring.mongo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.kapeta.spring.config.providers.KapetaConfigurationProvider;
-import com.mongodb.ConnectionString;
-import com.mongodb.MongoClientSettings;
-import com.mongodb.MongoCredential;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.Document;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.mongo.MongoClientSettingsBuilderCustomizer;
-import org.springframework.boot.autoconfigure.mongo.MongoConnectionDetails;
 import org.springframework.boot.autoconfigure.mongo.MongoProperties;
 import org.springframework.boot.autoconfigure.mongo.PropertiesMongoConnectionDetails;
 import org.springframework.context.annotation.Bean;
@@ -28,9 +23,9 @@ import org.springframework.data.convert.WritingConverter;
 import org.springframework.data.mongodb.MongoDatabaseFactory;
 import org.springframework.data.mongodb.MongoTransactionManager;
 import org.springframework.data.mongodb.core.convert.MongoCustomConversions;
+import org.springframework.lang.NonNull;
 
 import java.util.Arrays;
-import java.util.Optional;
 
 /**
  * Mongo configuration class.
@@ -61,10 +56,23 @@ abstract public class AbstractMongoDBConfig {
     public KapetaConfigurationProvider.ResourceInfo mongoInfo() {
         return configurationProvider.getResourceInfo(RESOURCE_TYPE, PORT_TYPE, resourceName);
     }
+
     @Bean
     public PropertiesMongoConnectionDetails mongoConnectionDetails(KapetaConfigurationProvider.ResourceInfo mongoInfo) {
         String databaseName = String.valueOf(mongoInfo.getOptions().getOrDefault("dbName", resourceName));
         String dbAuthDB = String.valueOf(mongoInfo.getOptions().getOrDefault("authdb", "admin"));
+
+        MongoProperties properties;
+        if ("mongodb+srv".equals(mongoInfo.getProtocol())) {
+            properties = createMongoUriProperties(databaseName, dbAuthDB, mongoInfo);
+        } else {
+            properties = createMongoProperties(databaseName, dbAuthDB, mongoInfo);
+        }
+        return new PropertiesMongoConnectionDetails(properties);
+    }
+
+    @NonNull
+    private MongoProperties createMongoProperties(String databaseName, String dbAuthDB, KapetaConfigurationProvider.ResourceInfo mongoInfo) {
         MongoProperties properties = new MongoProperties();
         properties.setDatabase(databaseName);
         properties.setHost(mongoInfo.getHost());
@@ -73,7 +81,18 @@ abstract public class AbstractMongoDBConfig {
         properties.setPassword(mongoInfo.getCredentials().getOrDefault("password","").toCharArray());
         properties.setAuthenticationDatabase(dbAuthDB);
         properties.setAutoIndexCreation(true);
-        return new PropertiesMongoConnectionDetails(properties);
+        return properties;
+    }
+
+    private MongoProperties createMongoUriProperties(String databaseName, String dbAuthDB, KapetaConfigurationProvider.ResourceInfo mongoInfo) {
+        String username = mongoInfo.getCredentials().get("username");
+        String password = mongoInfo.getCredentials().getOrDefault("password","");
+
+        String uri = String.format("mongodb+srv://%s:%s@%s/%s?ssl=false&authSource=%s", username, password, mongoInfo.getHost(), databaseName, dbAuthDB);
+
+        MongoProperties properties = new MongoProperties();
+        properties.setUri(uri);
+        return properties;
     }
 
     @Bean
