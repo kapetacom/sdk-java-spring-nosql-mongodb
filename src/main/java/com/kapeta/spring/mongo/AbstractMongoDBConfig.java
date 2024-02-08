@@ -9,6 +9,7 @@ package com.kapeta.spring.mongo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.kapeta.spring.config.providers.KapetaConfigurationProvider;
+import com.kapeta.spring.config.providers.types.ResourceInfo;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.Document;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,12 +54,12 @@ abstract public class AbstractMongoDBConfig {
     }
 
     @Bean("mongoInfo")
-    public KapetaConfigurationProvider.ResourceInfo mongoInfo() {
+    public ResourceInfo mongoInfo() {
         return configurationProvider.getResourceInfo(RESOURCE_TYPE, PORT_TYPE, resourceName);
     }
 
     @Bean
-    public PropertiesMongoConnectionDetails mongoConnectionDetails(KapetaConfigurationProvider.ResourceInfo mongoInfo) {
+    public PropertiesMongoConnectionDetails mongoConnectionDetails(ResourceInfo mongoInfo) {
         String databaseName = String.valueOf(mongoInfo.getOptions().getOrDefault("dbName", resourceName));
         String dbAuthDB = String.valueOf(mongoInfo.getOptions().getOrDefault("authdb", "admin"));
 
@@ -72,7 +73,7 @@ abstract public class AbstractMongoDBConfig {
     }
 
     @NonNull
-    private MongoProperties createMongoProperties(String databaseName, String dbAuthDB, KapetaConfigurationProvider.ResourceInfo mongoInfo) {
+    private MongoProperties createMongoProperties(String databaseName, String dbAuthDB, ResourceInfo mongoInfo) {
         MongoProperties properties = new MongoProperties();
         properties.setDatabase(databaseName);
         properties.setHost(mongoInfo.getHost());
@@ -84,7 +85,7 @@ abstract public class AbstractMongoDBConfig {
         return properties;
     }
 
-    private MongoProperties createMongoUriProperties(String databaseName, String dbAuthDB, KapetaConfigurationProvider.ResourceInfo mongoInfo) {
+    private MongoProperties createMongoUriProperties(String databaseName, String dbAuthDB, ResourceInfo mongoInfo) {
         String username = mongoInfo.getCredentials().get("username");
         String password = mongoInfo.getCredentials().getOrDefault("password","");
 
