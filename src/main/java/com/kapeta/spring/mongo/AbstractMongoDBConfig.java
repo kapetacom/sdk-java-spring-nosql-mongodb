@@ -62,9 +62,10 @@ abstract public class AbstractMongoDBConfig {
     public PropertiesMongoConnectionDetails mongoConnectionDetails(ResourceInfo mongoInfo) {
         String databaseName = String.valueOf(mongoInfo.getOptions().getOrDefault("dbName", resourceName));
         String dbAuthDB = String.valueOf(mongoInfo.getOptions().getOrDefault("authdb", "admin"));
+        String protocol = String.valueOf(mongoInfo.getOptions().getOrDefault("protocol", "mongodb"));
 
         MongoProperties properties;
-        if ("mongodb+srv".equals(mongoInfo.getProtocol())) {
+        if ("mongodb+srv".equals(protocol)) {
             properties = createMongoUriProperties(databaseName, dbAuthDB, mongoInfo);
         } else {
             properties = createMongoProperties(databaseName, dbAuthDB, mongoInfo);
