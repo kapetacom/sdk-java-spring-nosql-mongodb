@@ -11,6 +11,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.kapeta.spring.config.providers.KapetaConfigurationProvider;
 import com.kapeta.spring.config.providers.types.ResourceInfo;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.bson.Document;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -91,6 +92,9 @@ abstract public class AbstractMongoDBConfig {
         String password = mongoInfo.getCredentials().getOrDefault("password","");
 
         String uri = String.format("mongodb+srv://%s:%s@%s/%s?ssl=false&authSource=%s", username, password, mongoInfo.getHost(), databaseName, dbAuthDB);
+        if(!StringUtils.isEmpty(System.getenv("SPRING_DATA_MONGODB_URI"))) {
+            uri = System.getenv("SPRING_DATA_MONGODB_URI");
+        }
 
         MongoProperties properties = new MongoProperties();
         properties.setUri(uri);
