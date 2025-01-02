@@ -87,12 +87,25 @@ abstract public class AbstractMongoDBConfig {
         return properties;
     }
 
-    private MongoProperties createMongoUriProperties(String databaseName, String dbAuthDB, ResourceInfo mongoInfo) {
+    protected MongoProperties createMongoUriProperties(String databaseName, String dbAuthDB, ResourceInfo mongoInfo) {
         String username = mongoInfo.getCredentials().get("username");
         String password = mongoInfo.getCredentials().getOrDefault("password","");
 
-        String uri = String.format("mongodb+srv://%s:%s@%s/%s?ssl=false&authSource=%s", username, password, mongoInfo.getHost(), databaseName, dbAuthDB);
+        String ssl = "ssl=false";
+        if(mongoInfo.getOptions().containsKey("ssl")) {
+            if (Boolean.parseBoolean(mongoInfo.getOptions().get("ssl").toString())) {
+                ssl = "ssl=true";
+            }
+        }
+        String dbAuthDBStr = String.format("&authSource=%s", dbAuthDB);
+        if (StringUtils.isEmpty(dbAuthDB)) {
+            dbAuthDBStr = "";
+        }
+
+        String uri = String.format("mongodb+srv://%s:%s@%s/%s?%s%s", username, password, mongoInfo.getHost(), databaseName,ssl, dbAuthDBStr);
+        // Override with environment variable if set
         if(!StringUtils.isEmpty(System.getenv("SPRING_DATA_MONGODB_URI"))) {
+            log.info("Overriding MongoDB URI with environment variable SPRING_DATA_MONGODB_URI");
             uri = System.getenv("SPRING_DATA_MONGODB_URI");
         }
 
