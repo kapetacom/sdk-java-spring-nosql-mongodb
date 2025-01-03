@@ -103,11 +103,6 @@ abstract public class AbstractMongoDBConfig {
         }
 
         String uri = String.format("mongodb+srv://%s:%s@%s/%s?%s%s", username, password, mongoInfo.getHost(), databaseName,ssl, dbAuthDBStr);
-        // Override with environment variable if set
-        if(!StringUtils.isEmpty(System.getenv("SPRING_DATA_MONGODB_URI"))) {
-            log.info("Overriding MongoDB URI with environment variable SPRING_DATA_MONGODB_URI");
-            uri = System.getenv("SPRING_DATA_MONGODB_URI");
-        }
 
         MongoProperties properties = new MongoProperties();
         properties.setUri(uri);
