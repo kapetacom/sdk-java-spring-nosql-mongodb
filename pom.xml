@@ -6,7 +6,7 @@
 
     <groupId>com.kapeta</groupId>
     <artifactId>nosql-mongodb</artifactId>
-    <version>1.1.1</version>
+    <version>1.1.2</version>
 
     <name>${project.groupId}:${project.artifactId}</name>
     <description>MongoDB support for Kapeta Spring Boot SDK</description>
@@ -157,6 +157,11 @@
             <artifactId>spring-boot</artifactId>
             <version>[1.0,2.0)</version>
             <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 
