@@ -28,6 +28,9 @@ import org.springframework.data.mongodb.core.convert.MongoCustomConversions;
 import org.springframework.lang.NonNull;
 
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Mongo configuration class.
@@ -38,6 +41,8 @@ abstract public class AbstractMongoDBConfig {
     private static final String RESOURCE_TYPE = "kapeta/resource-type-mongodb";
 
     private static final String PORT_TYPE = "mongodb";
+
+    private static final String[] SUPPORTED_MONGO_OPTIONS = { "maxIdleTimeMS", "ssl"};
 
     @Autowired
     private KapetaConfigurationProvider configurationProvider;
@@ -91,18 +96,26 @@ abstract public class AbstractMongoDBConfig {
         String username = mongoInfo.getCredentials().get("username");
         String password = mongoInfo.getCredentials().getOrDefault("password","");
 
-        String ssl = "ssl=false";
-        if(mongoInfo.getOptions().containsKey("ssl")) {
-            if (Boolean.parseBoolean(mongoInfo.getOptions().get("ssl").toString())) {
-                ssl = "ssl=true";
+        Map<String, String> options = new HashMap<>();
+        for (String option : SUPPORTED_MONGO_OPTIONS) {
+            if (mongoInfo.getOptions().containsKey(option)) {
+                options.put(option, mongoInfo.getOptions().get(option).toString());
             }
         }
-        String dbAuthDBStr = String.format("&authSource=%s", dbAuthDB);
-        if (StringUtils.isEmpty(dbAuthDB)) {
-            dbAuthDBStr = "";
+
+        if (!StringUtils.isBlank(dbAuthDB)) {
+            options.put("authSource", dbAuthDB);
         }
 
-        String uri = String.format("mongodb+srv://%s:%s@%s/%s?%s%s", username, password, mongoInfo.getHost(), databaseName,ssl, dbAuthDBStr);
+        String formattedOptions = options.entrySet().stream()
+                .map(e -> e.getKey() + "=" + e.getValue())
+                .collect(Collectors.joining("&"));
+
+        if (!StringUtils.isBlank(formattedOptions)) {
+            formattedOptions = "?" + formattedOptions;
+        }
+
+        String uri = String.format("mongodb+srv://%s:%s@%s/%s%s", username, password, mongoInfo.getHost(), databaseName, formattedOptions);
 
         MongoProperties properties = new MongoProperties();
         properties.setUri(uri);

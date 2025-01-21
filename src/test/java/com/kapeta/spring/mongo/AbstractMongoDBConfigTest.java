@@ -4,11 +4,9 @@
  */
 package com.kapeta.spring.mongo;
 
-import com.kapeta.spring.config.providers.TestConfigProvider;
 import com.kapeta.spring.config.providers.types.ResourceInfo;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.mongo.MongoProperties;
-
 
 import java.util.HashMap;
 import java.util.Map;
@@ -36,7 +34,7 @@ public class AbstractMongoDBConfigTest {
 
         MongoProperties properties = mongoDBConfig.createMongoUriProperties("testDB", "admin", resourceInfo);
 
-        assertEquals("mongodb+srv://testUser:testPass@testHost/testDB?ssl=true&authSource=admin", properties.getUri());
+        assertEquals("mongodb+srv://testUser:testPass@testHost/testDB?authSource=admin&ssl=true", properties.getUri());
     }
 
 
@@ -58,7 +56,7 @@ public class AbstractMongoDBConfigTest {
 
         MongoProperties properties = mongoDBConfig.createMongoUriProperties("testDB", "admin", resourceInfo);
 
-        assertEquals("mongodb+srv://testUser:testPass@testHost/testDB?ssl=false&authSource=admin", properties.getUri());
+        assertEquals("mongodb+srv://testUser:testPass@testHost/testDB?authSource=admin&ssl=false", properties.getUri());
     }
 
     @Test
@@ -78,7 +76,7 @@ public class AbstractMongoDBConfigTest {
 
         MongoProperties properties = mongoDBConfig.createMongoUriProperties("testDB", "admin", resourceInfo);
 
-        assertEquals("mongodb+srv://testUser:testPass@testHost/testDB?ssl=false&authSource=admin", properties.getUri());
+        assertEquals("mongodb+srv://testUser:testPass@testHost/testDB?authSource=admin", properties.getUri());
     }
 
     @Test
@@ -100,6 +98,28 @@ public class AbstractMongoDBConfigTest {
         MongoProperties properties = mongoDBConfig.createMongoUriProperties("testDB", "", resourceInfo);
 
         assertEquals("mongodb+srv://testUser:testPass@testHost/testDB?ssl=true", properties.getUri());
+    }
+
+    @Test
+    public void testMoreParameters() {
+        Map<String, String> credentials = new HashMap<>();
+        credentials.put("username", "testUser");
+        credentials.put("password", "testPass");
+
+        Map<String, Object> options = new HashMap<>();
+        options.put("ssl", "true");
+        options.put("maxIdleTimeMS", "120000");
+
+        TestMongoDBConfig mongoDBConfig = new TestMongoDBConfig("testResource");
+
+        ResourceInfo resourceInfo = new ResourceInfo();
+        resourceInfo.setCredentials(credentials);
+        resourceInfo.setOptions(options);
+        resourceInfo.setHost("testHost");
+
+        MongoProperties properties = mongoDBConfig.createMongoUriProperties("testDB", "", resourceInfo);
+
+        assertEquals("mongodb+srv://testUser:testPass@testHost/testDB?maxIdleTimeMS=120000&ssl=true", properties.getUri());
     }
 
     private class TestMongoDBConfig extends AbstractMongoDBConfig {
